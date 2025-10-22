@@ -10,7 +10,7 @@ export const HomePage = () => {
   const [dates, setDates] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [number, setNumber] = useState<string>("");
-  const [message, setMessage] = useState<TMessage[]>([]);
+  const [messages, setMessage] = useState<TMessage[]>([]);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +20,6 @@ export const HomePage = () => {
     data: { lottery_number: string }[],
     trim: boolean = false
   ) => {
-    console.log("number", number, "data", data);
     if (trim) return data.some((item) => item.lottery_number === number);
     else return data.some((item) => item.lottery_number.slice(-4) === number);
   };
@@ -38,54 +37,101 @@ export const HomePage = () => {
 
   const handleSearch = () => {
     if (!lotteryData) return;
-    let message: TMessage[] = [];
-    if (checkLotteryNumber(number, lotteryData.first.lottery, true)) {
-      message.push({ message: `First Prize for ${number} ` });
-    } else if (
-      checkLotteryNumber(number, lotteryData.consolation.lottery, true)
-    ) {
-      message.push({ message: `Consolation Prize for ${number} ` });
-    } else if (checkLotteryNumber(number, lotteryData.second.lottery, true)) {
-      message.push({ message: `2nd Prize for ${number} ` });
-    } else if (checkLotteryNumber(number, lotteryData.third.lottery, true)) {
-      message.push({ message: `3rd Prize for ${number} ` });
-    } else if (
-      checkLotteryNumber(number.slice(-4), lotteryData.fourth.lottery)
-    ) {
-      message.push({ message: `4th Prize for ${number} ` });
-    } else if (
-      checkLotteryNumber(number.slice(-4), lotteryData.fifth.lottery)
-    ) {
-      message.push({ message: `5th Prize for ${number} ` });
-    } else if (
-      checkLotteryNumber(number.slice(-4), lotteryData.sixth.lottery)
-    ) {
-      message.push({ message: `6th Prize for ${number} ` });
-    } else if (
-      checkLotteryNumber(number.slice(-4), lotteryData.seventh.lottery)
-    ) {
-      message.push({ message: `7th Prize for ${number} ` });
-    } else if (
-      checkLotteryNumber(number.slice(-4), lotteryData.eighth.lottery)
-    ) {
-      message.push({ message: `7th Prize for ${number} ` });
-    } else if (
-      checkLotteryNumber(number.slice(-4), lotteryData.ninth.lottery)
-    ) {
-      message.push({ message: `9th Prize for ${number} ` });
-    } else {
-      message = [{ message: `No Prize for ${number} ` }];
+
+    const message: TMessage[] = [];
+
+    const PrizeType = [
+      "first",
+      "consolation",
+      "second",
+      "third",
+      "fourth",
+      "fifth",
+      "sixth",
+      "seventh",
+      "eighth",
+      "ninth",
+    ] as const;
+
+    for (const type of PrizeType) {
+      switch (type) {
+        case "first":
+          if (checkLotteryNumber(number, lotteryData.first.lottery, true)) {
+            message.push({ message: `First Prize for ${number}` });
+          }
+          break;
+        case "consolation":
+          if (
+            checkLotteryNumber(number, lotteryData.consolation.lottery, true)
+          ) {
+            message.push({ message: `Consolation Prize for ${number}` });
+          }
+          break;
+        case "second":
+          if (checkLotteryNumber(number, lotteryData.second.lottery, true)) {
+            message.push({ message: `2nd Prize for ${number}` });
+          }
+          break;
+        case "third":
+          if (checkLotteryNumber(number, lotteryData.third.lottery, true)) {
+            message.push({ message: `3rd Prize for ${number}` });
+          }
+          break;
+        case "fourth":
+          if (
+            checkLotteryNumber(number.slice(-4), lotteryData.fourth.lottery)
+          ) {
+            message.push({ message: `4th Prize for ${number}` });
+          }
+          break;
+        case "fifth":
+          if (checkLotteryNumber(number.slice(-4), lotteryData.fifth.lottery)) {
+            message.push({ message: `5th Prize for ${number}` });
+          }
+          break;
+        case "sixth":
+          if (checkLotteryNumber(number.slice(-4), lotteryData.sixth.lottery)) {
+            message.push({ message: `6th Prize for ${number}` });
+          }
+          break;
+        case "seventh":
+          if (
+            checkLotteryNumber(number.slice(-4), lotteryData.seventh.lottery)
+          ) {
+            message.push({ message: `7th Prize for ${number}` });
+          }
+          break;
+        case "eighth":
+          if (
+            checkLotteryNumber(number.slice(-4), lotteryData.eighth.lottery)
+          ) {
+            message.push({ message: `8th Prize for ${number}` });
+          }
+          break;
+        case "ninth":
+          if (checkLotteryNumber(number.slice(-4), lotteryData.ninth.lottery)) {
+            message.push({ message: `9th Prize for ${number}` });
+          }
+          break;
+      }
+    }
+
+    if (message.length === 0) {
+      message.push({ message: `No Prize for ${number}` });
     }
 
     setMessage(message);
   };
-  const handleBlur = (input: string) => {
+
+  const handleChange = (input: string) => {
     setNumber(input);
   };
 
   const fetchLotteryData = async (date: string) => {
     try {
       setLoading(true);
+      setNumber("");
+      setMessage([]);
       const response = await fetch(
         `https://indialotteryapi.com/wp-json/klr/v1/by-date?date=${date}`
       );
@@ -241,7 +287,7 @@ export const HomePage = () => {
                 <input
                   type="text"
                   value={number}
-                  onChange={(e) => handleBlur(e.target.value)}
+                  onChange={(e) => handleChange(e.target.value)}
                   className="mt-2 p-3 border border-gray-300 rounded-md w-full"
                   placeholder="Enter lottery number"
                 />
@@ -260,7 +306,7 @@ export const HomePage = () => {
                   {lotteryData.lottery_name + " " + [lotteryData.lottery_code]}
                 </div>
                 <div>
-                  {message.map((item: { message: string }, index) => (
+                  {messages.map((item: { message: string }, index) => (
                     <p key={index} className="text-green-400">
                       {item.message}
                     </p>
