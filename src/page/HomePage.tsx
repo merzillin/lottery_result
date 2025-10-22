@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from "react";
-import { generateLastNDates } from "../utils/helper";
+import { downloadFile, generateLastNDates } from "../utils/helper";
 import { PageCard } from "./Card";
+import type { TLottery } from "../type/HomePage";
 
 type TMessage = { message: string };
 export const HomePage = () => {
-  const [lotteryData, setLotteryData] = useState<any>(null);
+  const [lotteryData, setLotteryData] = useState<TLottery | null>(null);
   const [dates, setDates] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [number, setNumber] = useState<string>("");
@@ -14,36 +15,66 @@ export const HomePage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const checkLotteryNumber = (number: string, result: string): boolean => {
-    return result.includes(number);
+  const checkLotteryNumber = (
+    number: string,
+    data: { lottery_number: string }[],
+    trim: boolean = false
+  ) => {
+    console.log("number", number, "data", data);
+    if (trim) return data.some((item) => item.lottery_number === number);
+    else return data.some((item) => item.lottery_number.slice(-4) === number);
   };
-  const handleSearch = () => {
-    console.log("search");
 
-    //first prize
+  const handleDownload = () => {
+    if (!lotteryData) return;
+    const { lottery_code, lottery_name, draw_date } = lotteryData;
+    const name = lottery_code + lottery_name + draw_date;
+    downloadFile({
+      data: JSON.stringify(lotteryData),
+      fileName: name,
+      fileType: "json",
+    });
+  };
+
+  const handleSearch = () => {
+    if (!lotteryData) return;
     let message: TMessage[] = [];
-    if (number === lotteryData.first.ticket) {
-      message.push({ message: `First Prize - ` });
-    } else if (checkLotteryNumber(number, lotteryData.prizes.consolation)) {
-      message.push({ message: `Consolation Prize - ` });
-    } else if (checkLotteryNumber(number, lotteryData.prizes["2nd"])) {
-      message.push({ message: `2nd Prize - ` });
-    } else if (checkLotteryNumber(number, lotteryData.prizes["3rd"])) {
-      message.push({ message: `3rd Prize - ` });
-    } else if (checkLotteryNumber(number, lotteryData.prizes["4th"])) {
-      message.push({ message: `4th Prize - ` });
-    } else if (checkLotteryNumber(number, lotteryData.prizes["5th"])) {
-      message.push({ message: `5th Prize - ` });
-    } else if (checkLotteryNumber(number, lotteryData.prizes["6th"])) {
-      message.push({ message: `6th Prize - ` });
-    } else if (checkLotteryNumber(number, lotteryData.prizes["7th"])) {
-      message.push({ message: `7th Prize - ` });
-    } else if (checkLotteryNumber(number, lotteryData.prizes["8th"])) {
-      message.push({ message: `7th Prize - ` });
-    } else if (checkLotteryNumber(number, lotteryData.prizes["9th"])) {
-      message.push({ message: `9th Prize - ` });
+    if (checkLotteryNumber(number, lotteryData.first.lottery, true)) {
+      message.push({ message: `First Prize for ${number} ` });
+    } else if (
+      checkLotteryNumber(number, lotteryData.consolation.lottery, true)
+    ) {
+      message.push({ message: `Consolation Prize for ${number} ` });
+    } else if (checkLotteryNumber(number, lotteryData.second.lottery, true)) {
+      message.push({ message: `2nd Prize for ${number} ` });
+    } else if (checkLotteryNumber(number, lotteryData.third.lottery, true)) {
+      message.push({ message: `3rd Prize for ${number} ` });
+    } else if (
+      checkLotteryNumber(number.slice(-4), lotteryData.fourth.lottery)
+    ) {
+      message.push({ message: `4th Prize for ${number} ` });
+    } else if (
+      checkLotteryNumber(number.slice(-4), lotteryData.fifth.lottery)
+    ) {
+      message.push({ message: `5th Prize for ${number} ` });
+    } else if (
+      checkLotteryNumber(number.slice(-4), lotteryData.sixth.lottery)
+    ) {
+      message.push({ message: `6th Prize for ${number} ` });
+    } else if (
+      checkLotteryNumber(number.slice(-4), lotteryData.seventh.lottery)
+    ) {
+      message.push({ message: `7th Prize for ${number} ` });
+    } else if (
+      checkLotteryNumber(number.slice(-4), lotteryData.eighth.lottery)
+    ) {
+      message.push({ message: `7th Prize for ${number} ` });
+    } else if (
+      checkLotteryNumber(number.slice(-4), lotteryData.ninth.lottery)
+    ) {
+      message.push({ message: `9th Prize for ${number} ` });
     } else {
-      message = [{ message: `9th Prize - ` }];
+      message = [{ message: `No Prize for ${number} ` }];
     }
 
     setMessage(message);
@@ -62,7 +93,88 @@ export const HomePage = () => {
         throw new Error("Network response was not ok");
       }
       const data = await response.json();
-      setLotteryData(data);
+      const formattedLotteryData: TLottery = {
+        lottery_name: data.draw_name,
+        lottery_code: data.draw_code,
+        draw_date: data.draw_date,
+        first: {
+          count: 1,
+          prize: data.prizes.amounts["1st"],
+          lottery: [
+            {
+              lottery_number: data.first.ticket,
+              agent_code: data.first.agency_code,
+              agent_name: data.first.agent,
+              location: data.first.location,
+            },
+          ],
+        },
+        consolation: {
+          count: data.prizes.consolation.length,
+          prize: data.prizes.amounts["consolation"],
+          lottery: data.prizes.consolation.map((item: string) => ({
+            lottery_number: item,
+          })),
+        },
+        second: {
+          count: data.prizes["2nd"].length,
+          prize: data.prizes.amounts["2nd"],
+          lottery: data.prizes["2nd"].map((item: string) => ({
+            lottery_number: item,
+          })),
+        },
+        third: {
+          count: data.prizes["3rd"].length,
+          prize: data.prizes.amounts["3rd"],
+          lottery: data.prizes["3rd"].map((item: string) => ({
+            lottery_number: item,
+          })),
+        },
+        fourth: {
+          count: data.prizes["4th"].length,
+          prize: data.prizes.amounts["4th"],
+          lottery: data.prizes["4th"].map((item: string) => ({
+            lottery_number: item,
+          })),
+        },
+        fifth: {
+          count: data.prizes["5th"].length,
+          prize: data.prizes.amounts["5th"],
+          lottery: data.prizes["5th"].map((item: string) => ({
+            lottery_number: item,
+          })),
+        },
+        sixth: {
+          count: data.prizes["6th"].length,
+          prize: data.prizes.amounts["6th"],
+          lottery: data.prizes["6th"].map((item: string) => ({
+            lottery_number: item,
+          })),
+        },
+        seventh: {
+          count: data.prizes["7th"].length,
+          prize: data.prizes.amounts["7th"],
+          lottery: data.prizes["7th"].map((item: string) => ({
+            lottery_number: item,
+          })),
+        },
+        eighth: {
+          count: data.prizes["8th"].length,
+          prize: data.prizes.amounts["8th"],
+          lottery: data.prizes["8th"].map((item: string) => ({
+            lottery_number: item,
+          })),
+        },
+        ninth: {
+          count: data.prizes["9th"].length,
+          prize: data.prizes.amounts["9th"],
+          lottery: data.prizes["9th"].map((item: string) => ({
+            lottery_number: item,
+          })),
+        },
+      };
+
+      setLotteryData(formattedLotteryData);
       setLoading(false);
     } catch (err: any) {
       setError(err.message);
@@ -90,6 +202,8 @@ export const HomePage = () => {
   }
 
   if (error) return <div>Error: {error}</div>;
+
+  //console.log("lotteryData", lotteryData);
 
   return (
     <div className="flex items-center justify-center">
@@ -143,85 +257,96 @@ export const HomePage = () => {
               <div>
                 <h1>Details</h1>
                 <div className="text-lg font-semibold mb-4">
-                  {lotteryData.draw_name + " " + [lotteryData.draw_code]}
+                  {lotteryData.lottery_name + " " + [lotteryData.lottery_code]}
                 </div>
+                <div>
+                  {message.map((item: { message: string }, index) => (
+                    <p key={index} className="text-green-400">
+                      {item.message}
+                    </p>
+                  ))}
+                </div>
+                <button onClick={handleDownload}>Download</button>
               </div>
-              <div>
-                {message.map((item: { message: string }) => (
-                  <p>{item.message}</p>
-                ))}
-              </div>
+
               <div className="">
                 <div className="bg-white p-6 rounded-lg shadow-lg  mx-auto my-4">
                   <div className="text-lg font-semibold mb-4">
-                    1st Prize -{lotteryData.prizes.amounts["1st"]}
+                    1st Prize -{lotteryData.first.prize}
                   </div>
                   <hr className="border-t-2 border-gray-300 my-4" />
                   <div className="flex flex-row flex-wrap space-x-2">
                     <p className="text-gray-700 text-sm mb-2">
-                      {lotteryData.first.ticket}
+                      {lotteryData.first.lottery[0].lottery_number}
                     </p>
                     <p className="text-gray-700 text-sm mb-2">
-                      [{lotteryData.first.location}]
+                      [{lotteryData.first.lottery[0].location}]
                     </p>
                   </div>
                   <p className="text-gray-700 text-sm mb-2">
-                    Agent - {lotteryData.first.agent}
+                    Agent - {lotteryData.first.lottery[0].agent_name}
                   </p>
                 </div>
 
                 <div>
                   <PageCard
-                    label={`Consolation Prize ${lotteryData.prizes.amounts["consolation"]}`}
-                    data={lotteryData.prizes.consolation}
+                    label={`Consolation Prize ${lotteryData.consolation.prize}`}
+                    data={lotteryData.consolation.lottery}
+                    count={lotteryData.consolation.count}
                   />
                 </div>
                 <div>
                   <PageCard
-                    label={`2nd Prize ${lotteryData.prizes.amounts["2nd"]}`}
-                    data={lotteryData.prizes["2nd"]}
+                    label={`2nd Prize ${lotteryData.second.prize}`}
+                    data={lotteryData.second.lottery}
                   />
                 </div>
                 <div>
                   <PageCard
-                    label={`3rd Prize ${lotteryData.prizes.amounts["3rd"]}`}
-                    data={lotteryData.prizes["3rd"]}
+                    label={`3rd Prize ${lotteryData.third.prize}`}
+                    data={lotteryData.third.lottery}
                   />
                 </div>
                 <div>
                   <PageCard
-                    label={`4th Prize ${lotteryData.prizes.amounts["4th"]}`}
-                    data={lotteryData.prizes["4th"]}
+                    label={`4th Prize ${lotteryData.fourth.prize}`}
+                    data={lotteryData.fourth.lottery}
+                    count={lotteryData.fourth.count}
                   />
                 </div>
                 <div>
                   <PageCard
-                    label={`5th Prize ${lotteryData.prizes.amounts["5th"]}`}
-                    data={lotteryData.prizes["5th"]}
+                    label={`5th Prize ${lotteryData.fifth.prize}`}
+                    data={lotteryData.fifth.lottery}
+                    count={lotteryData.fifth.count}
                   />
                 </div>
                 <div>
                   <PageCard
-                    label={`6th Prize ${lotteryData.prizes.amounts["6th"]}`}
-                    data={lotteryData.prizes["6th"]}
+                    label={`6th Prize ${lotteryData.sixth.prize}`}
+                    data={lotteryData.sixth.lottery}
+                    count={lotteryData.sixth.count}
                   />
                 </div>
                 <div>
                   <PageCard
-                    label={`7th Prize ${lotteryData.prizes.amounts["7th"]}`}
-                    data={lotteryData.prizes["7th"]}
+                    label={`7th Prize ${lotteryData.seventh.prize}`}
+                    data={lotteryData.seventh.lottery}
+                    count={lotteryData.seventh.count}
                   />
                 </div>
                 <div>
                   <PageCard
-                    label={`8th Prize ${lotteryData.prizes.amounts["8th"]}`}
-                    data={lotteryData.prizes["8th"]}
+                    label={`8th Prize ${lotteryData.eighth.prize}`}
+                    data={lotteryData.eighth.lottery}
+                    count={lotteryData.eighth.count}
                   />
                 </div>
                 <div>
                   <PageCard
-                    label={`9th Prize ${lotteryData.prizes.amounts["9th"]}`}
-                    data={lotteryData.prizes["9th"]}
+                    label={`9th Prize ${lotteryData.ninth.prize}`}
+                    data={lotteryData.ninth.lottery}
+                    count={lotteryData.ninth.count}
                   />
                 </div>
               </div>
