@@ -25,6 +25,9 @@ export default function DashboardPage() {
     const prizeNinth = getResultByPrize(record?.ninth.lottery);
     const report = [
       {
+        lotteryName: record.lottery_name,
+        lotteryCode: record.lottery_code,
+        date: record.draw_date,
         fourth: prizeFourth,
         fifth: prizeFifth,
         sixth: prizeSixth,
@@ -73,70 +76,88 @@ export default function DashboardPage() {
         </div>
       </div>
       {reportResult.length > 0 && (
-        <div className="w-full flex flex-col space-y-8 border rounded p-4">
+        <div className="w-full flex flex-col space-y-8  p-4">
           {reportResult.map((item, index) => (
-            <div key={index} className="space-y-8">
-              {["fourth", "fifth", "sixth", "seventh", "ninth"].map(
-                (prize, prizeIndex) => (
-                  <div key={prizeIndex}>
-                    <h3 className="text-2xl font-bold text-gray-800 mb-4">{`${
-                      prize.charAt(0).toUpperCase() + prize.slice(1)
-                    } Prize`}</h3>
+            <div key={index} className="w-full  p-4">
+              <div className="border rounded px-2 py-1 flex flex-col">
+                <label className="block">{item.lotteryName}</label>
 
-                    {item[prize].map((obj: any, objIndex: number) => (
+                <div className="flex flex-row space-x-4 overflow-x-auto">
+                  {["fourth", "fifth", "sixth", "seventh", "ninth"].map(
+                    (prize, prizeIndex) => (
                       <div
-                        key={objIndex}
-                        className="p-4 border rounded-lg bg-gray-50 shadow-sm mb-6"
+                        key={prizeIndex}
+                        className="flex flex-col border p-4 rounded-lg shadow-sm"
                       >
-                        <label className="block text-lg font-semibold text-gray-700 mb-2">
-                          Probability: {obj.type}
-                        </label>
+                        <h3 className="text-2xl font-bold text-gray-800 mb-4">
+                          {`${
+                            prize.charAt(0).toUpperCase() + prize.slice(1)
+                          } Prize`}
+                        </h3>
+                        <div className="flex flex-row">
+                          {item[prize].map((obj: any, objIndex: number) => (
+                            <div
+                              key={objIndex}
+                              className="p-4 border rounded-lg shadow-sm mb-6 flex flex-col ml-2 mr-2"
+                            >
+                              <label className="block text-lg font-semibold text-gray-700 mb-2">
+                                Probability: {obj.type}
+                              </label>
 
-                        {obj.result.map(
-                          (resultObj: any, resultIndex: number) => (
-                            <div key={resultIndex} className="mt-4">
-                              {resultObj.map(
-                                (outputObj: any, outputIndex: number) => (
-                                  <div
-                                    key={outputIndex}
-                                    className="mb-4 p-4 border-t border-gray-300"
-                                  >
-                                    <div className="flex flex-col gap-3">
-                                      <div className="flex justify-between items-center">
-                                        <label className="font-medium text-gray-700">
-                                          {outputObj.key}
-                                        </label>
-                                        <label className="text-sm text-gray-600">
-                                          {obj.type}: {outputObj.count}
-                                        </label>
-                                      </div>
+                              {obj.result.map(
+                                (resultObj: any, resultIndex: number) => (
+                                  <div key={resultIndex} className="mt-4 ">
+                                    {resultObj.map(
+                                      (outputObj: any, outputIndex: number) => (
+                                        <div
+                                          key={outputIndex}
+                                          className="mb-4  p-4 border-t border-gray-300"
+                                        >
+                                          <div className="flex flex-col gap-3">
+                                            <div className="flex flex-col items-start">
+                                              <label className="font-medium text-gray-700">
+                                                {outputObj.key}
+                                              </label>
+                                              <label className="text-sm text-gray-600">
+                                                {obj.type}: {outputObj.count}
+                                              </label>
+                                            </div>
 
-                                      <div className="text-sm text-gray-500">
-                                        <span className="font-semibold">
-                                          Even:
-                                        </span>{" "}
-                                        {outputObj.values.even}
-                                        <span className="ml-2 font-semibold">
-                                          Odd:
-                                        </span>{" "}
-                                        {outputObj.values.odd}
-                                        <span className="ml-2 font-semibold">
-                                          Prime:
-                                        </span>{" "}
-                                        {outputObj.values.prime}
-                                      </div>
-                                    </div>
+                                            <div className="text-sm text-gray-500 flex flex-row">
+                                              <div className="flex flex-row">
+                                                <span className="font-semibold">
+                                                  Even:
+                                                </span>{" "}
+                                                <p>{outputObj.values.even}</p>
+                                              </div>
+                                              <div className="flex flex-row">
+                                                <span className="ml-2 font-semibold">
+                                                  Odd:
+                                                </span>{" "}
+                                                <p>{outputObj.values.odd}</p>
+                                              </div>
+                                              <div className="flex flex-row">
+                                                <span className="ml-2 font-semibold">
+                                                  Prime:
+                                                </span>{" "}
+                                                <p>{outputObj.values.prime}</p>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      )
+                                    )}
                                   </div>
                                 )
                               )}
                             </div>
-                          )
-                        )}
+                          ))}
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                )
-              )}
+                    )
+                  )}
+                </div>
+              </div>
             </div>
           ))}
         </div>
