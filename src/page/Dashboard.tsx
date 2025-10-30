@@ -2,15 +2,37 @@
 import { useSelector } from "react-redux";
 import type { RootState } from "../store/Store";
 import { useState } from "react";
-import { getResultByPrize } from "../utils/number";
+import { getRangeCount, getResultByPrize } from "../utils/number";
 
 export default function DashboardPage() {
   const lotteryData = useSelector((state: RootState) => state.dashboard);
+  console.log("lotteryData :", lotteryData);
   const [reportResult, setReportResult] = useState<any[]>([]);
 
   const getResult = (code: string) => {
     const record = lotteryData.find((item) => item.lottery_code === code);
-    //console.log("record", record);
+
+    const rangeData = {
+      fourth: getRangeCount(
+        record?.fourth.lottery.map((item) => item.lottery_number)
+      ),
+      fifth: getRangeCount(
+        record?.fifth.lottery.map((item) => item.lottery_number)
+      ),
+      sixth: getRangeCount(
+        record?.sixth.lottery.map((item) => item.lottery_number)
+      ),
+      seventh: getRangeCount(
+        record?.seventh.lottery.map((item) => item.lottery_number)
+      ),
+      eighth: getRangeCount(
+        record?.eighth.lottery.map((item) => item.lottery_number)
+      ),
+      ninth: getRangeCount(
+        record?.ninth.lottery.map((item) => item.lottery_number)
+      ),
+    };
+
     if (!record?.fourth.lottery) return;
     const prizeFourth = getResultByPrize(record?.fourth.lottery);
     if (!record?.fifth.lottery) return;
@@ -27,6 +49,7 @@ export default function DashboardPage() {
       {
         lotteryName: record.lottery_name,
         lotteryCode: record.lottery_code,
+        range: rangeData,
         date: record.draw_date,
         fourth: prizeFourth,
         fifth: prizeFifth,
@@ -89,11 +112,28 @@ export default function DashboardPage() {
                         key={prizeIndex}
                         className="flex flex-col border p-4 rounded-lg shadow-sm"
                       >
-                        <h3 className="text-2xl font-bold text-gray-800 mb-4">
-                          {`${
-                            prize.charAt(0).toUpperCase() + prize.slice(1)
-                          } Prize`}
-                        </h3>
+                        <div>
+                          <h3 className="text-2xl font-bold text-gray-800 mb-4">
+                            {`${
+                              prize.charAt(0).toUpperCase() + prize.slice(1)
+                            } Prize`}
+                          </h3>
+                          <div className="flex flex-col">
+                            <label>Range</label>
+                            <div className="grid grid-cols-2 gap-2">
+                              {item.range[prize].map(
+                                (
+                                  rangeObj: { label: string; value: number },
+                                  rangeIndex: number
+                                ) => (
+                                  <p key={rangeIndex}>
+                                    {rangeObj.label} - {rangeObj.value}
+                                  </p>
+                                )
+                              )}
+                            </div>
+                          </div>
+                        </div>
                         <div className="flex flex-row">
                           {item[prize].map((obj: any, objIndex: number) => (
                             <div
@@ -119,7 +159,10 @@ export default function DashboardPage() {
                                                 {outputObj.key}
                                               </label>
                                               <label className="text-sm text-gray-600">
-                                                {obj.type}: {outputObj.count}
+                                                {obj.type}: {outputObj.count}/
+                                                {outputObj.values.even +
+                                                  outputObj.values.odd +
+                                                  outputObj.values.prime}
                                               </label>
                                             </div>
 

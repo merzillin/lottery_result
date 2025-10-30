@@ -242,3 +242,37 @@ export function getResultByPrize(input: { lottery_number: string }[]) {
   }
   return output;
 }
+
+export function getRangeCount(input?: string[]) {
+  const ranges = [
+    "0-1000",
+    "1000-2000",
+    "2000-3000",
+    "3000-4000",
+    "4000-5000",
+    "5000-6000",
+    "6000-7000",
+    "7000-8000",
+    "8000-9000",
+    "9000-10000",
+  ];
+
+  // initialize output array
+  const output = ranges.map((label) => ({ label, value: 0 }));
+
+  if (!input) return output;
+
+  for (const n of input) {
+    const value = parseInt(n, 10);
+
+    for (const rangeObj of output) {
+      const [min, max] = rangeObj.label.split("-").map(Number);
+      if (value >= min && value < max) {
+        rangeObj.value++;
+        break;
+      }
+    }
+  }
+
+  return output;
+}

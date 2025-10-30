@@ -1,18 +1,38 @@
-import { useState } from "react";
+import { lazy, Suspense, useState, type JSX } from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import "./App.css";
-import DashboardPage from "./page/Dashboard";
-import HomePage from "./page/HomePage";
-import LotteryPage from "./page/LotteryPage";
+
+interface RouteConfig {
+  menuId: number;
+  menuName: string;
+  Component: React.LazyExoticComponent<() => JSX.Element>;
+}
 
 function App() {
   const [isOpen, setIsOpen] = useState(false);
 
   // ✅ Dynamic route data
-  const data = [
-    { menuId: 1, menuName: "home", Component: <HomePage /> },
-    { menuId: 3, menuName: "Lottery", Component: <LotteryPage /> },
-    { menuId: 2, menuName: "dashboard", Component: <DashboardPage /> },
+  const data: RouteConfig[] = [
+    {
+      menuId: 1,
+      menuName: "home",
+      Component: lazy(() => import("./page/HomePage")),
+    },
+    {
+      menuId: 3,
+      menuName: "Lottery",
+      Component: lazy(() => import("./page/LotteryPage")),
+    },
+    {
+      menuId: 2,
+      menuName: "dashboard",
+      Component: lazy(() => import("./page/Dashboard")),
+    },
+    {
+      menuId: 4,
+      menuName: "report",
+      Component: lazy(() => import("./page/Report")),
+    },
   ];
 
   const closeMenu = () => setIsOpen(false);
@@ -103,15 +123,19 @@ function App() {
 
         {/* Routes generated dynamically */}
         <div className="flex-1 overflow-auto text-black">
-          <Routes>
-            {data.map((item) => (
-              <Route
-                key={item.menuId}
-                path={item.menuName === "home" ? "/" : `/${item.menuName}`}
-                element={item.Component}
-              />
-            ))}
-          </Routes>
+          <Suspense
+            fallback={<div className="p-4 text-center">Loading...</div>}
+          >
+            <Routes>
+              {data.map(({ menuId, menuName, Component }) => (
+                <Route
+                  key={menuId}
+                  path={menuName === "home" ? "/" : `/${menuName}`}
+                  element={<Component />}
+                />
+              ))}
+            </Routes>
+          </Suspense>
         </div>
       </div>
     </Router>
