@@ -6,7 +6,6 @@ import { getRangeCount, getResultByPrize } from "../utils/number";
 
 export default function DashboardPage() {
   const lotteryData = useSelector((state: RootState) => state.dashboard);
-  console.log("lotteryData :", lotteryData);
   const [reportResult, setReportResult] = useState<any[]>([]);
 
   const getResult = (code: string) => {
@@ -59,11 +58,8 @@ export default function DashboardPage() {
         ninth: prizeNinth,
       },
     ];
-    //console.log("report", JSON.stringify(report));
     setReportResult((prev) => [...prev, ...report]);
   };
-
-  console.log("reportResult :", reportResult);
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">

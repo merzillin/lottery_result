@@ -258,8 +258,6 @@ export default function LotteryPage() {
 
   if (error) return <div>Error: {error}</div>;
 
-  //console.log("lotteryData", lotteryData);
-
   return (
     <div className="flex justify-center">
       <div className="bg-white p-8 rounded-lg shadow-lg w-1/2 mt-10">

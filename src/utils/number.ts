@@ -163,7 +163,7 @@ export function findAllMaxCounts(
   let maxCount = -1;
 
   // First pass: find max count
-  for (const [_, counts] of Object.entries(data)) {
+  for (const [, counts] of Object.entries(data)) {
     for (const type of ["even", "odd", "prime"] as const) {
       if (counts[type] > maxCount) {
         maxCount = counts[type];
@@ -234,7 +234,7 @@ export function getResultByPrize(input: { lottery_number: string }[]) {
         break;
       }
       default: {
-        console.log(type);
+        console.error(type);
         break;
       }
     }
