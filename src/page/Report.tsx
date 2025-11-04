@@ -4,7 +4,21 @@ import type { RootState } from "../store/Store";
 import { useSelector } from "react-redux";
 import { getRangeCount, getResultByPrize } from "../utils/number";
 import ReportCard from "../components/ReportPrizeCard";
+import PdfGenerator from "../components/PdfGenerator";
+import { pdf } from "@react-pdf/renderer";
 
+interface Values {
+  even: number;
+  odd: number;
+  prime: number;
+}
+
+interface ResultItem {
+  key: string;
+  type: "prime" | "even" | "odd"; // Adjust based on other possible types
+  count: number;
+  values: Values;
+}
 type TSub = {
   number: string[];
   range: { label: string; value: number }[];
@@ -17,10 +31,10 @@ type TMain = {
   range: { label: string; value: number }[];
   prize: string;
   count: number;
-  result: any;
+  result: ResultItem[];
 };
 
-interface IReportData {
+export interface IReportData {
   lotteryName: string;
   lotteryCode: string;
   drawDate: string;
@@ -46,6 +60,20 @@ interface IReportData {
 export default function ReportPage() {
   const [reportData, setReportData] = useState<IReportData[]>([]);
   const lotteryData = useSelector((state: RootState) => state.dashboard);
+
+  const generatePDF = async () => {
+    const blob = await pdf(
+      <PdfGenerator
+        title="Lottery Report"
+        content="This is the content of the PDF"
+        lotteryData={reportData}
+      />
+    ).toBlob();
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "lottery_report.pdf";
+    link.click();
+  };
 
   const generateReport = (code: string) => {
     const record = lotteryData.find((item) => item.lottery_code === code);
@@ -154,9 +182,10 @@ export default function ReportPage() {
         result: getResultByPrize(record?.ninth.lottery),
       },
     };
-
+    // need to fix later
     setReportData([output]);
   };
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header Section */}
@@ -209,7 +238,10 @@ export default function ReportPage() {
                     {`${reportObj.drawDate} - ${reportObj.lotteryCode}`}
                   </h2>
                 </div>
-                <button className="px-1 py-1 h-[50px] bg-indigo-600 text-white rounded-md text-xs font-medium transition-all duration-200 ease-in-out hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 active:bg-indigo-800">
+                <button
+                  onClick={generatePDF}
+                  className="px-1 py-1 h-[50px] bg-indigo-600 text-white rounded-md text-xs font-medium transition-all duration-200 ease-in-out hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 active:bg-indigo-800"
+                >
                   Export
                 </button>
               </div>
